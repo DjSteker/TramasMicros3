@@ -195,6 +195,115 @@ void TaskScheduler::checkAll() {
 }
 
 
+// // STOP Timer1 (TCCR1B)
+// TCCR1B &= ~((1<<CS12)|(1<<CS11)|(1<<CS10));
+//
+// // Prescaler 1 Timer1 (TCCR1B)
+// TCCR1B &= ~((1<<CS12)|(1<<CS11)|(1<<CS10));
+// TCCR1B |= (1<<CS10);
+//
+// // Prescaler 8 Timer1 (TCCR1B)
+// TCCR1B &= ~((1<<CS12)|(1<<CS11)|(1<<CS10));
+// TCCR1B |= (1<<CS11);
+//
+// // Prescaler 64 Timer1 (TCCR1B)
+// TCCR1B &= ~((1<<CS12)|(1<<CS11)|(1<<CS10));
+// TCCR1B |= (1<<CS11)|(1<<CS10);
+//
+// // Prescaler 256 Timer1 (TCCR1B)
+// TCCR1B &= ~((1<<CS12)|(1<<CS11)|(1<<CS10));
+// TCCR1B |= (1<<CS12);
+//
+// // Prescaler 1024 Timer1 (TCCR1B)
+// TCCR1B &= ~((1<<CS12)|(1<<CS11)|(1<<CS10));
+// TCCR1B |= (1<<CS12)|(1<<CS10);
+//
+// STOP Timer2 (TCCR2B)
+// TCCR2B &= ~((1<<CS22)|(1<<CS21)|(1<<CS20));
+//
+// // Prescaler 1 Timer2 (TCCR2B)
+// TCCR2B &= ~((1<<CS22)|(1<<CS21)|(1<<CS20));
+// TCCR2B |= (1<<CS20);
+//
+// // Prescaler 8 Timer2 (TCCR2B)
+// TCCR2B &= ~((1<<CS22)|(1<<CS21)|(1<<CS20));
+// TCCR2B |= (1<<CS21);
+//
+// // Prescaler 32 Timer2 (TCCR2B)
+// TCCR2B &= ~((1<<CS22)|(1<<CS21)|(1<<CS20));
+// TCCR2B |= (1<<CS21)|(1<<CS20);
+//
+// // Prescaler 64 Timer2 (TCCR2B)
+// TCCR2B &= ~((1<<CS22)|(1<<CS21)|(1<<CS20));
+// TCCR2B |= (1<<CS22);
+//
+// // Prescaler 128 Timer2 (TCCR2B)
+// TCCR2B &= ~((1<<CS22)|(1<<CS21)|(1<<CS20));
+// TCCR2B |= (1<<CS22)|(1<<CS20);
+//
+// // Prescaler 256 Timer2 (TCCR2B)
+// TCCR2B &= ~((1<<CS22)|(1<<CS21)|(1<<CS20));
+// TCCR2B |= (1<<CS22)|(1<<CS21);
+//
+// // Prescaler 1024 Timer2 (TCCR2B)
+// TCCR2B &= ~((1<<CS22)|(1<<CS21)|(1<<CS20));
+// TCCR2B |= (1<<CS22)|(1<<CS21)|(1<<CS20);
+//
+// STOP Timer0 (TCCR0B)
+// TCCR0B &= ~((1<<CS02)|(1<<CS01)|(1<<CS00));
+//
+// // Prescaler 1 Timer0 (TCCR0B)
+// TCCR0B &= ~((1<<CS02)|(1<<CS01)|(1<<CS00));
+// TCCR0B |= (1<<CS00);
+//
+// // Prescaler 8 Timer0 (TCCR0B)
+// TCCR0B &= ~((1<<CS02)|(1<<CS01)|(1<<CS00));
+// TCCR0B |= (1<<CS01);
+//
+// // Prescaler 64  Timer0 (TCCR0B)
+// TCCR0B &= ~((1<<CS02)|(1<<CS01)|(1<<CS00));
+// TCCR0B |= (1<<CS01)|(1<<CS00);
+//
+// // Prescaler 256 Timer0 (TCCR0B)
+// TCCR0B &= ~((1<<CS02)|(1<<CS01)|(1<<CS00));
+// TCCR0B |= (1<<CS02);
+//
+// // Prescaler 1024 Timer0 (TCCR0B)
+// TCCR0B &= ~((1<<CS02)|(1<<CS01)|(1<<CS00));
+// TCCR0B |= (1<<CS02)|(1<<CS00);
+//
+// Timer0: 8 bits (Valor máximo: 255)
+// Timer1: 16 bits (Valor máximo: 65,535)
+// Timer2: 8 bits (Valor máximo: 255)
+// ADC: 10 bits (Valor máximo: 1,023)
+//
+//Timer2 (TCCR2B) 16bis
+// Prescaler 8:    TCCR2B |= (1<<CS21);
+// Prescaler 32:   TCCR2B |= (1<<CS22) | (1<<CS20);
+// Prescaler 64:   TCCR2B |= (1<<CS22) | (1<<CS21);
+// Prescaler 128:  TCCR2B |= (1<<CS22) | (1<<CS21) | (1<<CS20);
+// Prescaler 256:  TCCR2B |= (1<<CS22);
+// Prescaler 1024: TCCR2B |= (1<<CS22) | (1<<CS21);Timer1 (TCCR1B)Prescaler 1:    TCCR1B |= (1<<CS10);
+//Timer1 (TCCR1B) 8bits
+// Prescaler 8:    TCCR1B |= (1<<CS11);
+// Prescaler 64:   TCCR1B |= (1<<CS11) | (1<<CS10);
+// Prescaler 256:  TCCR1B |= (1<<CS12);
+// Prescaler 1024: TCCR1B |= (1<<CS12) | (1<<CS10);Timer0 (TCCR0B)Prescaler 1:    TCCR0B |= (1<<CS00);
+//Timer0 (TCCR0B) 8bits
+// Prescaler 8:    TCCR0B |= (1<<CS01);
+// Prescaler 64:   TCCR0B |= (1<<CS01) | (1<<CS00);
+// Prescaler 256:  TCCR0B |= (1<<CS02);
+// Prescaler 1024: TCCR0B |= (1<<CS02) | (1<<CS00);ADC (ADCSRA)División 2:   ADCSRA |= (1<<ADPS0);
+//ADC (ADCSRA)  10bis
+// División 4:   ADCSRA |= (1<<ADPS1);
+// División 8:   ADCSRA |= (1<<ADPS1) | (1<<ADPS0);
+// División 16:  ADCSRA |= (1<<ADPS2);
+// División 32:  ADCSRA |= (1<<ADPS2) | (1<<ADPS0);
+// División 64:  ADCSRA |= (1<<ADPS2) | (1<<ADPS1);
+// División 128: ADCSRA |= (1<<ADPS2) | (1<<ADPS1) | (1<<ADPS0);
+
+
+
 /*
  * TramasMicros3.cpp
  * 
