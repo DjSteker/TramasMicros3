@@ -1,9 +1,4 @@
-# TramasMicros3
-Librería de temporización y planificación de tareas para microcontroladores AVR
 
-Claro, aquí tienes una descripción completa para el repositorio de GitHub de **TramasMicros3**:
-
----
 
 # TramasMicros3
 
