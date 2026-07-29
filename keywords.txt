@@ -1,0 +1,27 @@
+# Clases
+SystemTimer	KEYWORD1
+TramasMicros3	KEYWORD1
+TaskScheduler	KEYWORD1
+
+# Métodos y funciones principales
+init	KEYWORD2
+getMicros	KEYWORD2
+getMillis	KEYWORD2
+reset	KEYWORD2
+disable	KEYWORD2
+enable	KEYWORD2
+check	KEYWORD2
+setInterval	KEYWORD2
+isDue	KEYWORD2
+registerTask	KEYWORD2
+removeTask	KEYWORD2
+checkAll	KEYWORD2
+
+# Propiedades
+active	KEYWORD2
+previous	KEYWORD2
+interval	KEYWORD2
+execute	KEYWORD2
+
+# Constantes
+MAX_TIMED_TASKS	LITERAL1
