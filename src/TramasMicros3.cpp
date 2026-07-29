@@ -24,22 +24,49 @@
 #include <avr/io.h>
 
 // ============================================================================
-// SystemTimer - Implementación (Timer1, CTC, prescaler 1, OCR1A ajustado)
+// SystemTimer - Implementación (Timer1, CTC, prescaler configurable)
 // ============================================================================
 
-// Constantes para el timer con prescaler 1
-// F_CPU depende de la placa (16 MHz para Arduino Uno, 8 MHz para 3.3V)
-
-// Con prescaler 1, cada tick del timer = 1 ciclo de CPU
-// Para 16 MHz: 1 tick = 62.5 ns
-// Para 8 MHz:  1 tick = 125 ns
+// Prescalers VÁLIDOS para Timer1 (16 bits): 1, 8, 64, 256, 1024
+// (32, 128, 512... son válidos para Timer2, NO para Timer1)
+#ifndef TIMER_PRESCALER
 #define TIMER_PRESCALER 1
+#endif
+
+// Selección de bits CS12:CS10 según el prescaler elegido
+#if TIMER_PRESCALER == 1
+#define TIMER1_CS_BITS ((1 << CS10))
+#elif TIMER_PRESCALER == 8
+#define TIMER1_CS_BITS ((1 << CS11))
+#elif TIMER_PRESCALER == 64
+#define TIMER1_CS_BITS ((1 << CS11) | (1 << CS10))
+#elif TIMER_PRESCALER == 256
+#define TIMER1_CS_BITS ((1 << CS12))
+#elif TIMER_PRESCALER == 1024
+#define TIMER1_CS_BITS ((1 << CS12) | (1 << CS10))
+#else
+#error "TIMER_PRESCALER invalido para Timer1. Usa 1, 8, 64, 256 o 1024."
+#endif
+
+// Ticks de Timer1 por microsegundo, con el prescaler elegido
 #define TICKS_PER_MICROSECOND (F_CPU / 1000000UL / TIMER_PRESCALER)
 
-// OCR1A para generar interrupción cada 1000 µs (1 ms)
-// Con prescaler 1 a 16 MHz: 16000 ticks = 1000 µs -> OCR1A = 15999
-// Con prescaler 1 a 8 MHz:  8000 ticks = 1000 µs  -> OCR1A = 7999
+#if TICKS_PER_MICROSECOND == 0
+#error "TIMER_PRESCALER demasiado alto para F_CPU: TICKS_PER_MICROSECOND=0 (division por cero en runtime)."
+#endif
+
+// OCR1A para generar interrupción cada 1000 µs (1 ms) exactos
 #define OCR1A_VALUE ((F_CPU / 1000UL / TIMER_PRESCALER) - 1)
+
+#if ((F_CPU / 1000UL) % TIMER_PRESCALER) != 0
+#warning "F_CPU/1000 no es multiplo exacto de TIMER_PRESCALER: el periodo de 1ms tendra error de redondeo."
+#endif
+
+
+
+// // ============================================================================
+// // SystemTimer - Implementación (Timer1, CTC, prescaler 1, OCR1A ajustado)
+// // ============================================================================
 
 static volatile uint32_t g_micros_counter = 0;
 static volatile uint16_t g_micros_fraction = 0;  // Para acumular fracciones de µs
@@ -54,10 +81,10 @@ void SystemTimer::init() {
   TCCR1B = 0;
   TCNT1 = 0;
 
-  // Modo CTC con prescaler 1
-  TCCR1B = (1 << WGM12) | (1 << CS10);  // CTC, prescaler 1
+  // Modo CTC (WGM12) + Bits del Prescaler seleccionados dinámicamente
+  TCCR1B = (1 << WGM12) | TIMER1_CS_BITS;
 
-  // OCR1A calculado según F_CPU
+  // OCR1A calculado exactamente para 1 ms (1000 µs)
   OCR1A = OCR1A_VALUE;
 
   // Habilitar interrupción por comparación A
@@ -82,15 +109,16 @@ uint32_t SystemTimer::getMicros() {
   base = g_micros_counter;
   tcnt = TCNT1;
 
-  // Verificar si la interrupción está pendiente
+  // Si hay interrupción pendiente y TCNT1 se reinició a 0,
+  // sumamos el intervalo de 1 ms completo que aún no se procesó en el ISR
   if ((TIFR1 & (1 << OCF1A)) && (tcnt < (OCR1A / 2))) {
     base += 1000;
   }
   SREG = oldSREG;
 
-  // Convertir ticks del timer a microsegundos
-  // tcnt contiene los ticks transcurridos desde la última interrupción
-  uint32_t micros_fraction = (uint32_t)tcnt / TICKS_PER_MICROSECOND;
+  // Fórmula universal precisa: µs = (ticks * prescaler) / (MHz)
+  // Ejemplo a 16MHz y Prescaler 8: (tcnt * 8) / 16  ==> tcnt / 2
+  uint32_t micros_fraction = ((uint32_t)tcnt * TIMER_PRESCALER) / (F_CPU / 1000000UL);
 
   return base + micros_fraction;
 }
@@ -277,14 +305,14 @@ void TaskScheduler::checkAll() {
 // Timer2: 8 bits (Valor máximo: 255)
 // ADC: 10 bits (Valor máximo: 1,023)
 //
-//Timer2 (TCCR2B) 8bits
+//Timer2 (TCCR2B) 16bis
 // Prescaler 8:    TCCR2B |= (1<<CS21);
 // Prescaler 32:   TCCR2B |= (1<<CS22) | (1<<CS20);
 // Prescaler 64:   TCCR2B |= (1<<CS22) | (1<<CS21);
 // Prescaler 128:  TCCR2B |= (1<<CS22) | (1<<CS21) | (1<<CS20);
 // Prescaler 256:  TCCR2B |= (1<<CS22);
 // Prescaler 1024: TCCR2B |= (1<<CS22) | (1<<CS21);Timer1 (TCCR1B)Prescaler 1:    TCCR1B |= (1<<CS10);
-//Timer1 (TCCR1B) 18bits
+//Timer1 (TCCR1B) 8bits
 // Prescaler 8:    TCCR1B |= (1<<CS11);
 // Prescaler 64:   TCCR1B |= (1<<CS11) | (1<<CS10);
 // Prescaler 256:  TCCR1B |= (1<<CS12);
@@ -294,13 +322,15 @@ void TaskScheduler::checkAll() {
 // Prescaler 64:   TCCR0B |= (1<<CS01) | (1<<CS00);
 // Prescaler 256:  TCCR0B |= (1<<CS02);
 // Prescaler 1024: TCCR0B |= (1<<CS02) | (1<<CS00);ADC (ADCSRA)División 2:   ADCSRA |= (1<<ADPS0);
-//ADC (ADCSRA)  10bits
+//ADC (ADCSRA)  10bis
 // División 4:   ADCSRA |= (1<<ADPS1);
 // División 8:   ADCSRA |= (1<<ADPS1) | (1<<ADPS0);
 // División 16:  ADCSRA |= (1<<ADPS2);
 // División 32:  ADCSRA |= (1<<ADPS2) | (1<<ADPS0);
 // División 64:  ADCSRA |= (1<<ADPS2) | (1<<ADPS1);
 // División 128: ADCSRA |= (1<<ADPS2) | (1<<ADPS1) | (1<<ADPS0);
+
+
 
 
 
